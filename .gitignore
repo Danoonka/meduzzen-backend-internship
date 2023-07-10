@@ -1,0 +1,23 @@
+# Byte-compiled / optimized Python files
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+env/
+*.env
+
+# Environment-specific settings
+.env
+!.env.sample
+
+# Logs
+*.log
+
+# Local development configuration
+pyproject.toml
+poetry.lock
+
+.idea
+
+__init__.py
