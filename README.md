@@ -39,3 +39,23 @@ pytest
 ```
 
 pytest will automatically discover and run your tests. You can also specify the path to the directory or file containing the tests if they are located elsewhere.
+
+## Running App using docker
+
+1. Build the Docker image
+
+```
+docker build -t myapp .
+```
+This will create a Docker image named "myapp" based on the provided Dockerfile.
+
+2. Run the Docker container
+```
+docker run -d -p 8000:8000 myapp
+```
+
+3. Run tests in Docker
+
+```
+docker exec -it <container id> pytest
+```
