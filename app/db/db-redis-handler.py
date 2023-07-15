@@ -1,14 +1,10 @@
-import os
-from dotenv import load_dotenv
 from sqlalchemy.testing import asyncio
 from app.main import app
-from run import env_path
-
-load_dotenv(dotenv_path=env_path)
+from config import redis_host, redis_port
 
 
 async def connect_to_redis():
-    redis = await asyncio.create_redis_pool(f"redis://{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}")
+    redis = await asyncio.create_redis_pool(f"redis://{redis_host}:{redis_port}")
     return redis
 
 

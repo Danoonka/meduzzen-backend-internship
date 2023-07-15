@@ -4,13 +4,11 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from run import env_path
-
-load_dotenv(dotenv_path=env_path)
+from config import postgres_dsn
 
 
 async def connect_to_postgres():
-    engine = create_async_engine(os.getenv('POSTGRES_DSN'), echo=True)
+    engine = create_async_engine(postgres_dsn, echo=True)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
