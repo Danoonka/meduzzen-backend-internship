@@ -1,0 +1,32 @@
+version: "3.3"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./src/:/usr/src/app/
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    env_file:
+      - .env
+  postgres:
+    image: postgres:12.1-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+  redis:
+    image: redis:latest
+    restart: always
+    volumes:
+      - redis_data:/data
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+
+volumes:
+  postgres_data:
+  redis_data:
