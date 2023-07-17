@@ -1,30 +1,13 @@
-import os
-from dotenv import load_dotenv
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.main import app
-from config import postgres_dsn
+
+from config import postgres_dsn, postgres_dsn_alembic
+
+engine = create_engine(postgres_dsn_alembic, echo=True, future=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 
 
-async def connect_to_postgres():
-    engine = create_async_engine(postgres_dsn, echo=True)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    async with async_session() as session:
-        async with session.begin():
-            create_table_stmt = text("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(255))")
-            await session.execute(create_table_stmt)
-    return async_session
-
-
-async def startup():
-    app.state.postgres_session = await connect_to_postgres()
-
-
-async def shutdown():
-    await app.state.postgres_session.close()
-    await app.state.postgres_session.wait_closed()
-
-
-app.add_event_handler("startup", startup)
-app.add_event_handler("shutdown", shutdown)
+async def get_session() -> AsyncSession:
+    async with SessionLocal() as session:
+        yield session

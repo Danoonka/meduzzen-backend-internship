@@ -59,3 +59,17 @@ docker run -d -p 8000:8000 myapp
 ```
 docker exec -it <container id> pytest
 ```
+
+## Migrations 
+
+### To create migrations run:
+
+```
+    alembic revision --autogenerate -m <migration name>
+```
+
+###  To use migrations run:
+
+```
+    alembic upgrade <hash of migration>
+```
