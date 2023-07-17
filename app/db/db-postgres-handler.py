@@ -6,3 +6,8 @@ from config import postgres_dsn, postgres_dsn_alembic
 
 engine = create_engine(postgres_dsn_alembic, echo=True, future=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
+
+
+async def get_session() -> AsyncSession:
+    async with SessionLocal() as session:
+        yield session
