@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from app.routers.user import user_router
+
 app = FastAPI()
 
 origins = [
@@ -19,7 +21,6 @@ app.add_middleware(
 )
 
 
-
 @app.get("/")
 async def root():
     return {
@@ -27,3 +28,6 @@ async def root():
         "detail": "ok",
         "result": "working"
     }
+
+
+app.include_router(user_router, prefix="/users", tags=["users"])

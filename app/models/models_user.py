@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing_extensions import List
 
 Base = declarative_base()
@@ -19,6 +19,7 @@ class User(Base):
     user_status = Column(String, nullable=True)
     user_city = Column(String, nullable=True)
     user_phone = Column(Integer, nullable=True)
+    user_password = Column(String, nullable=False)
     user_links = relationship("UserLink", backref="user")
     is_superuser = Column(Boolean, default=False)
 
