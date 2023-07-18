@@ -1,7 +1,9 @@
+from typing import Optional
+
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing_extensions import List
 
 Base = declarative_base()
@@ -22,6 +24,23 @@ class User(Base):
     user_password = Column(String, nullable=False)
     user_links = relationship("UserLink", backref="user")
     is_superuser = Column(Boolean, default=False)
+
+
+class UserResponseModel(BaseModel):
+    user_id: int
+    user_email: str
+    user_firstname: str
+    user_lastname: str
+    user_avatar: Optional[str] = None
+    user_status: Optional[str] = None
+    user_city: Optional[str] = None
+    user_phone: Optional[int] = None
+    user_password: str
+    user_links: List[str] = []
+    is_superuser: bool = Field(default=False)
+
+    class Config:
+        orm_mode = True
 
 
 class UserLink(Base):
@@ -50,7 +69,7 @@ class UserUpdate(UserBase):
 
 
 class UserList(BaseModel):
-    users: List[UserBase]
+    users: List[UserResponseModel]
 
 
 class UserSignInRequest(BaseModel):

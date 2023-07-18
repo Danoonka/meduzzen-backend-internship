@@ -1,44 +1,53 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.db_postgres_handler import get_session
-from app.models.models_user import UserCreate, UserUpdate
-from app.services.user import get_all_users, get_user_by_id, create_user, update_user, delete_user
+from app.models.models_user import UserCreate, UserUpdate, User, UserResponseModel, UserList
+from app.services.user import UserService
 
 user_router = APIRouter()
 
 
-@user_router.get("/")
-async def get_users(page: int = Query(1, ge=1), page_size: int = Query(10, ge=1),session: AsyncSession = Depends(get_session)):
-    users = await get_all_users(session, page, page_size)
-    return {"users": users}
+async def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
+    return UserService(session)
 
 
-@user_router.get("/{user_id}")
-async def get_user(user_id: int, session: AsyncSession = Depends(get_session)):
-    user = await get_user_by_id(user_id, session)
+@user_router.get("/", response_model=UserList)
+async def get_users(page: int = Query(1, ge=1), page_size: int = Query(10, ge=1),
+                    user_service: UserService = Depends(get_user_service)) -> UserList:
+    users = await user_service.get_all_users(page=page, page_size=page_size)
+    return UserList(users=users)
+
+
+@user_router.get("/{user_id}", response_model=UserResponseModel)
+async def get_user(user_id: int, user_service: UserService = Depends(get_user_service)) -> UserResponseModel:
+    user = await user_service.get_user_by_id(user_id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return UserResponseModel(user=user)
 
 
-@user_router.post("/")
-async def create_new_user(user_data: UserCreate, session: AsyncSession = Depends(get_session)):
-    user = await create_user(user_data, session)
-    return user
+@user_router.post("/", response_model=UserResponseModel)
+async def create_new_user(user_data: UserCreate,
+                          user_service: UserService = Depends(get_user_service)) -> UserResponseModel:
+    user = await user_service.create_user(user_data=user_data)
+    return UserResponseModel(user=user)
 
 
-@user_router.put("/{user_id}")
-async def update_existing_user(user_id: int, user_data: UserUpdate, session: AsyncSession = Depends(get_session)):
-    user = await update_user(user_id, user_data, session)
+@user_router.put("/{user_id}", response_model=UserResponseModel)
+async def update_existing_user(user_id: int, user_data: UserUpdate,
+                               user_service: UserService = Depends(get_user_service)) -> UserResponseModel:
+    user = await user_service.update_user(user_id=user_id, user_data=user_data)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return UserResponseModel(user=user)
 
 
 @user_router.delete("/{user_id}")
-async def delete_existing_user(user_id: int, session: AsyncSession = Depends(get_session)):
-    user = await delete_user(user_id, session)
+async def delete_existing_user(user_id: int, user_service: UserService = Depends(get_user_service)):
+    user = await user_service.delete_user(user_id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
