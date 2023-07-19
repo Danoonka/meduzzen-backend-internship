@@ -82,3 +82,7 @@ class UserSignUpRequest(BaseModel):
     user_password: str
     user_firstname: str
     user_lastname: str
+
+
+class UserDeleteResponse(BaseModel):
+    message: str

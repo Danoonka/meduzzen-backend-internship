@@ -48,7 +48,7 @@ class UserService:
             await self.session.commit()
             return user
 
-    async def delete_user(self, user_id: int):
+    async def delete_user(self, user_id: int) -> UserResponseModel:
         user = await self.get_user_by_id(user_id=user_id)
         if user:
             self.session.delete(user)
