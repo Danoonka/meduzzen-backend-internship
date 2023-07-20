@@ -86,3 +86,4 @@ class UserSignUpRequest(BaseModel):
 
 class UserDeleteResponse(BaseModel):
     message: str
+    user: UserResponseModel

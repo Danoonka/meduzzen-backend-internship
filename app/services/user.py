@@ -2,7 +2,7 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
-from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserList
+from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserList, UserDeleteResponse
 from passlib.context import CryptContext
 
 
@@ -10,7 +10,7 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_all_users(self, page: int = 1, page_size: int = 10) -> UserList:
+    async def get_all_users(self, page: int = 1, page_size: int = 10):
         query = select(User).options(selectinload(User.user_links))
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
@@ -48,10 +48,10 @@ class UserService:
             await self.session.commit()
             return user
 
-    async def delete_user(self, user_id: int) -> UserResponseModel:
+    async def delete_user(self, user_id: int) -> dict[str, UserResponseModel]:
         user = await self.get_user_by_id(user_id=user_id)
         if user:
             self.session.delete(user)
             await self.session.flush()
             await self.session.commit()
-        return user
+        return {"message": "User deleted successfully", "user": user}
