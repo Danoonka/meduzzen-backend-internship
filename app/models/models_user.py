@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing_extensions import List
 
 Base = declarative_base()
@@ -85,3 +85,8 @@ class DeleteUserResponse(BaseModel):
     status_code: int
     detail: str
     result: dict
+
+
+class UserSignInResponse(BaseModel):
+    access_token: str
+    token_type: str

@@ -1,11 +1,10 @@
-from typing import Annotated
+from typing import Optional
 
 from fastapi import FastAPI, Depends, Header, HTTPException
-from fastapi.security import OAuth2PasswordBearer
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
-from app.models.models_user import User, UserResponseModel
+from app.models.models_user import UserResponseModel
 from app.routers.user import user_router, get_user_service
 from app.services.user import UserService
 
@@ -37,9 +36,7 @@ async def root():
 
 
 async def get_current_user(
-        token: str = Header(None),
-        user_service: UserService = Depends(get_user_service)
-):
+        token: str = Header(None), user_service: UserService = Depends(get_user_service)) -> dict:
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,8 +53,8 @@ async def get_current_user(
     return user
 
 
-@app.get("/me")
-async def get_me(current_user: dict = Depends(get_current_user)):
+@app.get("/me", response_model=dict)
+async def get_me(current_user: dict = Depends(get_current_user)) -> dict:
     return current_user
 
 

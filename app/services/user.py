@@ -4,7 +4,8 @@ from jose import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserList, UserDeleteResponse
+from typing_extensions import List, Optional
+from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel
 from app.services.utils import get_password_hash, verify_password
 from config import SECRET_KEY, ALGORITHM
 
@@ -13,15 +14,13 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_by_username(self, username: str):
+    async def get_user_by_username(self, username: str) -> UserResponseModel:
         user = await self.session.execute(
             select(User).where(User.user_email == username).options(selectinload(User.user_links))
         )
-        await self.session.flush()
-        await self.session.commit()
         return user
 
-    async def get_all_users(self, page: int = 1, page_size: int = 10) -> UserList:
+    async def get_all_users(self, page: int = 1, page_size: int = 10) -> List[UserResponseModel]:
         query = select(User).options(selectinload(User.user_links))
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
@@ -70,21 +69,22 @@ class UserService:
             self.session.delete(user)
             await self.session.flush()
             await self.session.commit()
-        return {"message": "User deleted successfully", "user": user}
-        return user
+        return user.user_id
 
-    async def authenticate_user(self, username: str, password: str):
+    async def authenticate_user(self, username: str, password: str) -> UserResponseModel:
         user = self.get_user_by_username(username)
         if user and verify_password(password, user["hashed_password"]):
             return user
 
-    def get_user_from_token(self, token: str) -> str:
+    def get_user_from_token(self, token: str) -> Optional[str]:
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             expiration = datetime.fromtimestamp(payload["exp"])
             if datetime.utcnow() >= expiration:
                 return None
-            return payload["sub"]
+            return {
+                "payload": payload
+            }
         except jwt.ExpiredSignatureError:
             return None
         except jwt.InvalidTokenError:
