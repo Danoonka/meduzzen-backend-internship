@@ -14,9 +14,9 @@ async def get_user_service(session: AsyncSession = Depends(get_session)) -> User
     return UserService(session)
 
 
-@user_router.get("/")
+@user_router.get("/", response_model=List[UserResponseModel])
 async def get_users(page: int = Query(1, ge=1), page_size: int = Query(10, ge=1),
-                    user_service: UserService = Depends(get_user_service)):
+                    user_service: UserService = Depends(get_user_service)) -> List[UserResponseModel]:
     users = await user_service.get_all_users(page=page, page_size=page_size)
     return users
 

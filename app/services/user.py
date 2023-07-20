@@ -10,7 +10,7 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_all_users(self, page: int = 1, page_size: int = 10):
+    async def get_all_users(self, page: int = 1, page_size: int = 10) -> List[UserResponseModel]:
         query = select(User).options(selectinload(User.user_links))
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
