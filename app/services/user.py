@@ -48,10 +48,10 @@ class UserService:
             await self.session.commit()
             return user
 
-    async def delete_user(self, user_id: int) -> dict[str, UserResponseModel]:
+    async def delete_user(self, user_id: int) -> int:
         user = await self.get_user_by_id(user_id=user_id)
         if user:
             self.session.delete(user)
             await self.session.flush()
             await self.session.commit()
-        return {"message": "User deleted successfully", "user": user}
+        return user.user_id

@@ -84,6 +84,7 @@ class UserSignUpRequest(BaseModel):
     user_lastname: str
 
 
-class UserDeleteResponse(BaseModel):
-    message: str
-    user: UserResponseModel
+class DeleteUserResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: dict
