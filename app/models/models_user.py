@@ -39,9 +39,6 @@ class UserResponseModel(BaseModel):
     user_links: List[str] = []
     is_superuser: bool = Field(default=False)
 
-    class Config:
-        orm_mode = True
-
 
 class UserLink(Base):
     __tablename__ = 'user_links'

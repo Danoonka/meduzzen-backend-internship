@@ -1,7 +1,13 @@
-from fastapi import FastAPI
+from typing import Annotated
+
+from fastapi import FastAPI, Depends, Header, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
-from app.routers.user import user_router
+from app.models.models_user import User, UserResponseModel
+from app.routers.user import user_router, get_user_service
+from app.services.user import UserService
 
 app = FastAPI()
 
@@ -28,6 +34,31 @@ async def root():
         "detail": "ok",
         "result": "working"
     }
+
+
+async def get_current_user(
+        token: str = Header(None),
+        user_service: UserService = Depends(get_user_service)
+):
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing access token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = user_service.get_user_from_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+@app.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return current_user
 
 
 app.include_router(user_router, prefix="/users", tags=["users"])
