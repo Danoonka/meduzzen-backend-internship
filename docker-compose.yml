@@ -33,29 +33,6 @@ services:
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
 
-  postgres:
-    image: postgres:12.1-alpine
-    volumes:
-      - postgres_data_test:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=${DB_USER_TEST}
-      - POSTGRES_PASSWORD=${DB_PASS_TEST}
-      - POSTGRES_DB=${DB_NAME_TEST}
-    ports:
-      - 6000:6000
-
-  test:
-    build:
-      context: .
-      dockerfile: Dockerfile.test
-    volumes:
-      - ./src/:/usr/src/app/
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-
 volumes:
   postgres_data:
   redis_data:
-  postgres_data_test:
