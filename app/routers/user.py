@@ -4,8 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from app.db.db_postgres_handler import get_session
-from app.models.models_user import UserCreate, UserUpdate, UserResponseModel, UserSignInRequest, UserSignInResponse, \
-    DeleteUserResponse
+from app.models.models_user import UserCreate, UserUpdate, UserResponseModel, UserSignInRequest,DeleteUserResponse
 from app.services.user import UserService
 from app.services.utils import create_access_token
 from config import ACCESS_TOKEN_EXPIRE_MINUTES
@@ -63,10 +62,10 @@ async def delete_existing_user(user_id: int,
     }
 
 
-@user_router.post('/sign_in', response_model=UserSignInResponse)
+@user_router.post('/sign_in')
 async def authorize(data: UserSignInRequest,
-                    user_service: UserService = Depends(get_user_service)) -> UserSignInResponse:
-    user = user_service.authenticate_user(data.user_email, data.user_password)
+                    user_service: UserService = Depends(get_user_service)):
+    user = await user_service.authenticate_user(data.user_email, data.user_password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -75,7 +74,7 @@ async def authorize(data: UserSignInRequest,
         )
     access_token_expires = timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
     access_token = create_access_token(
-        data={"sub": data.user_email},
+        data={"user": user.user_id},
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}

@@ -14,8 +14,8 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_by_username(self, username: str) -> UserResponseModel:
-        user = await self.session.execute(
+    async def get_user_by_username(self, username: str):
+        user = await self.session.scalar(
             select(User).where(User.user_email == username).options(selectinload(User.user_links))
         )
         return user
@@ -71,9 +71,9 @@ class UserService:
             await self.session.commit()
         return user.user_id
 
-    async def authenticate_user(self, username: str, password: str) -> UserResponseModel:
-        user = self.get_user_by_username(username)
-        if user and verify_password(password, user["hashed_password"]):
+    async def authenticate_user(self, username: str, password: str):
+        user = await self.get_user_by_username(username)
+        if user and verify_password(password, user.user_password):
             return user
 
     def get_user_from_token(self, token: str) -> Optional[str]:

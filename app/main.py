@@ -1,12 +1,12 @@
-from typing import Optional
-
-from fastapi import FastAPI, Depends, Header, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
-
-from app.models.models_user import UserResponseModel
 from app.routers.user import user_router, get_user_service
 from app.services.user import UserService
+from app.services.utils import VerifyToken, is_token_from_app
+
+token_auth_scheme = HTTPBearer()
 
 app = FastAPI()
 
@@ -35,26 +35,20 @@ async def root():
     }
 
 
-async def get_current_user(
-        token: str = Header(None), user_service: UserService = Depends(get_user_service)) -> dict:
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing access token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    user = user_service.get_user_from_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return user
-
-
 @app.get("/me", response_model=dict)
-async def get_me(current_user: dict = Depends(get_current_user)) -> dict:
+async def get_me(token: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
+                 user_service: UserService = Depends(get_user_service)) -> dict:
+    if not is_token_from_app(token):
+        current_user = user_service.get_user_from_token(token.credentials)
+        print(current_user)
+    else:
+        cur_usr = VerifyToken(token).verify()
+
+        if cur_usr.get("status"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=cur_usr)
+
+        current_user = cur_usr
+
     return current_user
 
 
