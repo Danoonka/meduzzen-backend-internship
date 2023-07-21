@@ -11,6 +11,9 @@ services:
       - ${SERVER_PORT}:${SERVER_PORT}
     env_file:
       - .env
+    depends_on:
+      - db
+
   db:
     image: postgres:12.1-alpine
     volumes:
@@ -20,7 +23,8 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
-    - 5432:5432
+      - 5432:5432
+
   redis:
     image: redis:latest
     restart: always

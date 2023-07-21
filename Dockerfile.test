@@ -1,0 +1,17 @@
+# Use the base image from the original Dockerfile
+FROM python:3.9
+
+# Set the working directory to the app directory
+WORKDIR /app
+
+# Install additional testing dependencies if required
+RUN pip install --no-cache-dir pytest
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+
+
+# Run the tests using pytest
+CMD ["pytest"]
