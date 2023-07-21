@@ -1,5 +1,4 @@
 from typing import Optional
-
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -49,9 +48,11 @@ class UserLink(Base):
 
 
 class UserBase(BaseModel):
+    user_id: int
     user_email: str
     user_firstname: str
     user_lastname: str
+    user_avatar: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -65,13 +66,21 @@ class UserUpdate(UserBase):
     user_phone: int
 
 
+class Pagination(BaseModel):
+    current_page: int
+    total_page: int
+    total_results: int
+
+
 class UserList(BaseModel):
-    users: List[UserResponseModel]
+    users: List[UserBase]
 
 
-class UserSignInRequest(BaseModel):
-    user_email: str
-    user_password: str
+class FullUserListResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: UserList
+    pagination: Pagination
 
 
 class UserSignUpRequest(BaseModel):
@@ -90,3 +99,9 @@ class DeleteUserResponse(BaseModel):
 class UserSignInResponse(BaseModel):
     access_token: str
     token_type: str
+
+
+class FullUserResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: UserResponseModel

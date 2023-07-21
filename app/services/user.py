@@ -1,38 +1,39 @@
-from datetime import datetime
-import jwt
-from jose import jwt
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from typing_extensions import List, Optional
-from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel
-from app.services.utils import get_password_hash, verify_password
-from config import SECRET_KEY, ALGORITHM
+from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserBase
+from app.utils.utils import get_password_hash
 
 
 class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_by_username(self, username: str):
-        user = await self.session.scalar(
-            select(User).where(User.user_email == username).options(selectinload(User.user_links))
-        )
-        return user
-
-    async def get_all_users(self, page: int = 1, page_size: int = 10) -> List[UserResponseModel]:
+    async def get_all_users(self, page: int = 1, page_size: int = 10) -> tuple[list[UserBase], int]:
         query = select(User).options(selectinload(User.user_links))
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        users = result.scalars().all()
+
+        total_users = await self.session.scalar(select(func.count()).select_from(User))
+        user_base_models = [
+            UserBase(
+                user_id=user.user_id,
+                user_email=user.user_email,
+                user_firstname=user.user_firstname,
+                user_lastname=user.user_lastname,
+                user_avatar=user.user_avatar
+            ) for user in users
+        ]
+        return user_base_models, total_users
 
     async def get_user_by_id(self, user_id: int) -> User:
-        result = await self.session.execute(
+        user = await self.session.scalar(
             select(User).where(User.user_id == user_id).options(selectinload(User.user_links))
         )
-        return result.scalar_one_or_none()
+        return user
 
     async def create_user(self, user_data: UserCreate) -> UserResponseModel:
         hashed_password = await get_password_hash(password=user_data.user_password)
@@ -66,26 +67,7 @@ class UserService:
     async def delete_user(self, user_id: int) -> int:
         user = await self.get_user_by_id(user_id=user_id)
         if user:
-            self.session.delete(user)
+            await self.session.delete(user)
             await self.session.flush()
             await self.session.commit()
         return user.user_id
-
-    async def authenticate_user(self, username: str, password: str):
-        user = await self.get_user_by_username(username)
-        if user and verify_password(password, user.user_password):
-            return user
-
-    def get_user_from_token(self, token: str) -> Optional[str]:
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            expiration = datetime.fromtimestamp(payload["exp"])
-            if datetime.utcnow() >= expiration:
-                return None
-            return {
-                "payload": payload
-            }
-        except jwt.ExpiredSignatureError:
-            return None
-        except jwt.InvalidTokenError:
-            return None
