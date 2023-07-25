@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.models_user import User, UserResponseModel
-from app.utils.utils import verify_password, verify, generate_temporary_password, get_password_hash
+from app.utils.utils import verify_password, verify, generate_temporary_password, get_password_hash, toUserResponse
 
 
 class AuthService:
@@ -39,10 +39,4 @@ class AuthService:
             await self.session.flush()
             await self.session.commit()
 
-            return UserResponseModel(
-                user_id=user.user_id,
-                user_email=user.user_email,
-                user_firstname=user.user_firstname,
-                user_lastname=user.user_lastname,
-                user_password=user.user_password
-            )
+            return toUserResponse(user)

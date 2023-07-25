@@ -5,6 +5,8 @@ import jwt
 from fastapi import HTTPException
 from passlib.context import CryptContext
 from typing_extensions import Awaitable
+
+from app.models.models_user import UserResponseModel, FullUserResponse
 from config import SECRET_KEY, ALGORITHM, DOMAIN, ALGORITHMS, API_AUDIENCE, ISSUER
 
 
@@ -32,10 +34,10 @@ def verify(token) -> Optional[dict]:
         signing_key = jwks_client.get_signing_key_from_jwt(
             token
         ).key
-    except jwt.exceptions.PyJWKClientError as error:
-        return {"status": "error", "msg": error.__str__()}
-    except jwt.exceptions.DecodeError as error:
-        return {"status": "error", "msg": error.__str__()}
+    except jwt.exceptions.PyJWKClientError:
+        return False
+    except jwt.exceptions.DecodeError:
+        return False
 
     try:
         payload = jwt.decode(
@@ -48,11 +50,11 @@ def verify(token) -> Optional[dict]:
         return payload
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
+        return False
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Token verification error: " + str(e))
+        return False
+    except Exception:
+        return False
 
 
 def generate_temporary_password(length=10) -> str:
@@ -70,3 +72,32 @@ def get_user_from_token(token) -> Optional[dict]:
     except jwt.InvalidTokenError:
         return False
     return user
+
+
+def toUserResponse(user):
+    user_response = UserResponseModel(
+        user_id=user.user_id,
+        user_email=user.user_email,
+        user_firstname=user.user_firstname,
+        user_lastname=user.user_lastname,
+        user_avatar=user.user_avatar,
+        user_status=user.user_status,
+        user_city=user.user_city,
+        user_phone=user.user_phone,
+        user_links=user.user_links,
+        is_superuser=user.is_superuser
+    )
+
+    return user_response
+
+
+def toFullUserResponse(user):
+    user = toUserResponse(user)
+
+    full_user_response = FullUserResponse(
+        status_code=0,
+        detail="string",
+        result=user
+    )
+
+    return full_user_response

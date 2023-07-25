@@ -1,7 +1,8 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserBase
+from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserBase, UserSignUpRequest, \
+    GetAllUsers
 from app.utils.utils import get_password_hash
 
 
@@ -9,7 +10,7 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_all_users(self, page: int = 1, page_size: int = 10) -> tuple[list[UserBase], int]:
+    async def get_all_users(self, page: int = 1, page_size: int = 10) -> GetAllUsers:
         query = select(User).options(selectinload(User.user_links))
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
@@ -27,7 +28,10 @@ class UserService:
                 user_avatar=user.user_avatar
             ) for user in users
         ]
-        return user_base_models, total_users
+        return GetAllUsers(
+            user_list=user_base_models,
+            total_users=total_users
+        )
 
     async def get_user_by_id(self, user_id: int) -> User:
         user = await self.session.scalar(
@@ -35,7 +39,7 @@ class UserService:
         )
         return user
 
-    async def create_user(self, user_data: UserCreate) -> UserResponseModel:
+    async def create_user(self, user_data: UserSignUpRequest) -> UserResponseModel:
         hashed_password = await get_password_hash(password=user_data.user_password)
         user = User(
             user_email=user_data.user_email,

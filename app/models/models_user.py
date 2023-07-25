@@ -34,7 +34,6 @@ class UserResponseModel(BaseModel):
     user_status: Optional[str] = None
     user_city: Optional[str] = None
     user_phone: Optional[int] = None
-    user_password: str
     user_links: List[str] = []
     is_superuser: bool = Field(default=False)
 
@@ -56,6 +55,9 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
+    user_email: str
+    user_firstname: str
+    user_lastname: str
     user_password: str
 
 
@@ -90,10 +92,14 @@ class UserSignUpRequest(BaseModel):
     user_lastname: str
 
 
+class UserId(BaseModel):
+    user_id: int
+
+
 class DeleteUserResponse(BaseModel):
     status_code: int
     detail: str
-    result: dict
+    result: UserId
 
 
 class UserSignInResponse(BaseModel):
@@ -105,3 +111,7 @@ class FullUserResponse(BaseModel):
     status_code: int
     detail: str
     result: UserResponseModel
+
+class GetAllUsers(BaseModel):
+    user_list: list[UserBase]
+    total_users: int
