@@ -1,7 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.models.models_user import User, UserCreate, UserUpdate, UserResponseModel, UserBase, UserSignUpRequest, \
+from app.models.models_user import User, UserUpdate, UserResponseModel, UserBase, UserSignUpRequest, \
     GetAllUsers
 from app.utils.utils import get_password_hash
 
@@ -75,3 +75,5 @@ class UserService:
             await self.session.flush()
             await self.session.commit()
         return user.user_id
+
+

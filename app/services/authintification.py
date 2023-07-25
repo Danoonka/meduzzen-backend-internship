@@ -1,8 +1,12 @@
+from typing import Optional
+import jwt
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.models_user import User, UserResponseModel
 from app.utils.utils import verify_password, verify, generate_temporary_password, get_password_hash, toUserResponse
+from config import SECRET_KEY, ALGORITHM
 
 
 class AuthService:
@@ -40,3 +44,13 @@ class AuthService:
             await self.session.commit()
 
             return toUserResponse(user)
+
+    async def get_user_from_token(self, token) -> Optional[dict]:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user = await self.get_user_by_username(payload['user_email'])
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token has expired")
+        except jwt.InvalidTokenError:
+            return False
+        return user

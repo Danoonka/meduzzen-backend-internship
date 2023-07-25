@@ -2,7 +2,6 @@ import string
 from random import choice
 from typing import Optional
 import jwt
-from fastapi import HTTPException
 from passlib.context import CryptContext
 from typing_extensions import Awaitable
 
@@ -63,18 +62,8 @@ def generate_temporary_password(length=10) -> str:
     return temporary_password
 
 
-def get_user_from_token(token) -> Optional[dict]:
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user = payload["user"]
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError:
-        return False
-    return user
 
-
-def toUserResponse(user):
+def toUserResponse(user) -> UserResponseModel:
     user_response = UserResponseModel(
         user_id=user.user_id,
         user_email=user.user_email,
@@ -91,7 +80,7 @@ def toUserResponse(user):
     return user_response
 
 
-def toFullUserResponse(user):
+def toFullUserResponse(user) -> FullUserResponse:
     user = toUserResponse(user)
 
     full_user_response = FullUserResponse(

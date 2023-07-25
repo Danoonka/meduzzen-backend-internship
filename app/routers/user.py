@@ -2,7 +2,7 @@ from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.db_postgres_handler import get_session
-from app.models.models_user import UserCreate, UserUpdate, UserResponseModel, DeleteUserResponse, \
+from app.models.models_user import UserUpdate, DeleteUserResponse, \
     FullUserResponse, UserList, Pagination, FullUserListResponse, UserSignUpRequest, UserId
 from app.services.user import UserService
 from app.utils.utils import toFullUserResponse
@@ -38,7 +38,6 @@ async def get_user(user_id: int, user_service: UserService = Depends(get_user_se
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return toFullUserResponse(user)
-
 
 
 @user_router.post("/", response_model=FullUserResponse)
