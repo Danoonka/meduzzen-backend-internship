@@ -27,7 +27,7 @@ async def authorize(data: UserLogInRequest,
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(
-        data={"user_email": user.user_email}, )
+        data={"user_email": user.user_email})
     return LoginResponse(
         status_code=0,
         detail='string',

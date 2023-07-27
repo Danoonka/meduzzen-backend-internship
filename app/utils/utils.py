@@ -5,28 +5,28 @@ import jwt
 from passlib.context import CryptContext
 from typing_extensions import Awaitable
 
-from app.models.models_user import UserResponseModel, FullUserResponse
+from app.models.models_user import UserResponseModel, FullUserResponse, User
 from config import SECRET_KEY, ALGORITHM, DOMAIN, ALGORITHMS, API_AUDIENCE, ISSUER
 
 
-def create_access_token(data) -> str:
+def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-async def get_password_hash(password) -> str:
+async def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-async def verify_password(plain_password, hashed_password) -> Awaitable[bool]:
+async def verify_password(plain_password: str, hashed_password: str) -> Awaitable[bool]:
     return pwd_context.verify(plain_password, hashed_password)
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def verify(token) -> Optional[dict]:
+def verify(token: str) -> Optional[dict]:
     jwks_url = f'https://{DOMAIN}/.well-known/jwks.json'
     jwks_client = jwt.PyJWKClient(jwks_url)
     try:
@@ -56,14 +56,13 @@ def verify(token) -> Optional[dict]:
         return False
 
 
-def generate_temporary_password(length=10) -> str:
+def generate_temporary_password(length: int = 10) -> str:
     characters = string.ascii_letters + string.digits + string.punctuation
     temporary_password = ''.join(choice(characters) for _ in range(length))
     return temporary_password
 
 
-
-def toUserResponse(user) -> UserResponseModel:
+def toUserResponse(user: User) -> UserResponseModel:
     user_response = UserResponseModel(
         user_id=user.user_id,
         user_email=user.user_email,
@@ -80,8 +79,8 @@ def toUserResponse(user) -> UserResponseModel:
     return user_response
 
 
-def toFullUserResponse(user) -> FullUserResponse:
-    user = toUserResponse(user)
+def toFullUserResponse(user: User) -> FullUserResponse:
+    user = toUserResponse(user=user)
 
     full_user_response = FullUserResponse(
         status_code=0,
