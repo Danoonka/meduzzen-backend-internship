@@ -14,3 +14,12 @@ DB_PASS_TEST = os.getenv('DB_PASS_TEST')
 DB_HOST_TEST = os.getenv('DB_HOST_TEST')
 DB_PORT_TEST = os.getenv('DB_PORT_TEST')
 DB_NAME_TEST = os.getenv('DB_NAME_TEST')
+
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')
+SECRET_KEY = os.getenv('SECRET_KEY')
+ALGORITHM = os.getenv('ALGORITHM')
+
+DOMAIN = os.getenv("DOMAIN")
+API_AUDIENCE = os.getenv("API_AUDIENCE")
+ISSUER = os.getenv("ISSUER")
+ALGORITHMS = os.getenv("ALGORITHMS")

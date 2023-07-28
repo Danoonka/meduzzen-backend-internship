@@ -1,9 +1,8 @@
 from typing import Optional
-
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing_extensions import List
 
 Base = declarative_base()
@@ -35,12 +34,8 @@ class UserResponseModel(BaseModel):
     user_status: Optional[str] = None
     user_city: Optional[str] = None
     user_phone: Optional[int] = None
-    user_password: str
     user_links: List[str] = []
     is_superuser: bool = Field(default=False)
-
-    class Config:
-        orm_mode = True
 
 
 class UserLink(Base):
@@ -52,12 +47,17 @@ class UserLink(Base):
 
 
 class UserBase(BaseModel):
+    user_id: int
     user_email: str
     user_firstname: str
     user_lastname: str
+    user_avatar: Optional[str] = None
 
 
 class UserCreate(UserBase):
+    user_email: str
+    user_firstname: str
+    user_lastname: str
     user_password: str
 
 
@@ -68,13 +68,21 @@ class UserUpdate(UserBase):
     user_phone: int
 
 
+class Pagination(BaseModel):
+    current_page: int
+    total_page: int
+    total_results: int
+
+
 class UserList(BaseModel):
-    users: List[UserResponseModel]
+    users: List[UserBase]
 
 
-class UserSignInRequest(BaseModel):
-    user_email: str
-    user_password: str
+class FullUserListResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: UserList
+    pagination: Pagination
 
 
 class UserSignUpRequest(BaseModel):
@@ -84,7 +92,26 @@ class UserSignUpRequest(BaseModel):
     user_lastname: str
 
 
+class UserId(BaseModel):
+    user_id: int
+
+
 class DeleteUserResponse(BaseModel):
     status_code: int
     detail: str
-    result: dict
+    result: UserId
+
+
+class UserSignInResponse(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class FullUserResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: UserResponseModel
+
+class GetAllUsers(BaseModel):
+    user_list: list[UserBase]
+    total_users: int
