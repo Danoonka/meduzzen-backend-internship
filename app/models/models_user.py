@@ -61,7 +61,10 @@ class UserCreate(UserBase):
     user_password: str
 
 
-class UserUpdate(UserBase):
+class UserUpdate(BaseModel):
+    user_firstname: str
+    user_lastname: str
+    user_avatar: Optional[str] = None
     user_avatar: str
     user_status: str
     user_city: str
