@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.models_user import User, UserUpdate, UserResponseModel, UserBase, UserSignUpRequest, \
     GetAllUsers
-from app.utils.utils import get_password_hash
+from app.utils.utils import get_password_hash, verify_password
 
 
 class UserService:
@@ -67,6 +67,17 @@ class UserService:
             await self.session.flush()
             await self.session.commit()
             return user
+
+    async def update_user_password(self, user_id: int, user_password: str, new_password: str) -> UserResponseModel:
+        user = await self.get_user_by_id(user_id=user_id)
+        if user:
+            if verify_password(plain_password=user_password, hashed_password=user.user_password):
+                hashed_password = await get_password_hash(new_password)
+                user.user_password = hashed_password
+                self.session.add(user)
+                await self.session.flush()
+                await self.session.commit()
+                return user
 
     async def delete_user(self, user_id: int) -> int:
         user = await self.get_user_by_id(user_id=user_id)

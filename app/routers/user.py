@@ -61,6 +61,20 @@ async def update_existing_user(user_id: int, user_data: UserUpdate,
     return toFullUserResponse(user)
 
 
+@user_router.put("/{user_id}/password", response_model=FullUserResponse)
+async def update_existing_user_password(user_id: int, user_password: str, new_password: str,
+                                        user_service: UserService = Depends(get_user_service),
+                                        current_user: FullUserResponse = Depends(get_current_user)) -> FullUserResponse:
+    if current_user.result.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    user = await user_service.update_user_password(user_id=user_id, user_password=user_password,
+                                                   new_password=new_password)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return toFullUserResponse(user)
+
+
 @user_router.delete("/{user_id}", response_model=DeleteUserResponse)
 async def delete_existing_user(user_id: int,
                                user_service: UserService = Depends(get_user_service),
