@@ -46,8 +46,7 @@ class CompanyService:
 
         return company
 
-    async def update_company(self, company_id: int, company_data: CompanyCreateUpdate) -> CompanyResponse:
-        company = await self.get_company_by_id(company_id=company_id)
+    async def update_company(self, company: CompanyResponse, company_data: CompanyCreateUpdate) -> CompanyResponse:
         if company:
             for field, value in company_data.dict(exclude_unset=True).items():
                 setattr(company, field, value)
@@ -55,8 +54,7 @@ class CompanyService:
             await self.session.commit()
             return company
 
-    async def delete_company(self, company_id: int) -> int:
-        company = await self.get_company_by_id(company_id=company_id)
+    async def delete_company(self, company: CompanyResponse) -> int:
         if company:
             await self.session.delete(company)
             await self.session.flush()

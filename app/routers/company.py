@@ -1,5 +1,4 @@
 from math import ceil
-
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,8 +22,8 @@ async def get_companies(page: int = Query(1, ge=1), page_size: int = Query(10, g
                         company_service: CompanyService = Depends(get_company_service)) -> FullCompanyListResponse:
     company_with_count = await company_service.get_all_companies(page=page, page_size=page_size)
     return FullCompanyListResponse(
-        status_code=0,
-        detail='string',
+        status_code=200,
+        detail='Companies list successfully get',
         result=CompanyList(
             companies=company_with_count.company_list
         ),
@@ -59,12 +58,12 @@ async def update_existing_company(
         company_data: CompanyCreateUpdate,
         company_service: CompanyService = Depends(get_company_service),
         current_user: FullUserResponse = Depends(get_current_user)) -> FullCompanyResponse:
-    company = await company_service.get_company_by_id(company_id)
+    company = await company_service.get_company_by_id(company_id=company_id)
     if current_user.result.user_id != company.owner_id:
         raise HTTPException(status_code=403, detail="Unauthorized")
-    updatedCompany = await company_service.update_company(company_id=company_id, company_data=company_data)
+    updatedCompany = await company_service.update_company(company=company, company_data=company_data)
     if not updatedCompany:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Company not found")
 
     return toFullCompanyResponse(updatedCompany)
 
@@ -73,12 +72,12 @@ async def update_existing_company(
 async def delete_existing_company(company_id: int,
                                   company_service: CompanyService = Depends(get_company_service),
                                   current_user: FullUserResponse = Depends(get_current_user)) -> DeleteCompanyResponse:
-    company = await company_service.get_company_by_id(company_id)
+    company = await company_service.get_company_by_id(company_id=company_id)
     if current_user.result.user_id != company.owner_id:
         raise HTTPException(status_code=403, detail="Unauthorized")
-    company_id = await company_service.delete_company(company_id=company_id)
+    company_id = await company_service.delete_company(company=company)
     if not company_id:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Company not found")
     return DeleteCompanyResponse(
         status_code=200,
         detail="Company delete successfully",
