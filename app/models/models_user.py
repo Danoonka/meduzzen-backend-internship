@@ -115,6 +115,77 @@ class FullUserResponse(BaseModel):
     detail: str
     result: UserResponseModel
 
+
 class GetAllUsers(BaseModel):
     user_list: list[UserBase]
     total_users: int
+
+
+class CompanyCreateUpdate(BaseModel):
+    company_name: str
+    company_description: str
+
+
+class Company(CompanyCreateUpdate):
+    company_id: int
+    owner_id: int
+    company_visible: bool
+    company_avatar: Optional[str] = None
+
+
+class CompanyDB(Base):
+    __tablename__ = "companies"
+
+    company_id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String)
+    company_description = Column(String)
+    owner_id = Column(Integer)
+    company_visible = Column(Boolean, default=True)
+    company_avatar = Column(String)
+
+
+class CompanyBase(BaseModel):
+    company_id: int
+    company_name: str
+    company_avatar: Optional[str] = None
+
+
+class GetAllCompanies(BaseModel):
+    company_list: list[CompanyBase]
+    total_companies: int
+
+
+class CompanyResponse(BaseModel):
+    company_id: int
+    company_name: str
+    company_description: str
+    owner_id: int
+    company_visible: bool
+    company_avatar: Optional[str] = None
+
+
+class FullCompanyResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: CompanyResponse
+
+
+class CompanyList(BaseModel):
+    companies: list[CompanyBase]
+
+
+class FullCompanyListResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: CompanyList
+    pagination: Pagination
+
+
+class CompanyId(BaseModel):
+    company_id: int
+
+
+class DeleteCompanyResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: CompanyId
