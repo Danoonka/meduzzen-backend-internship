@@ -5,8 +5,9 @@ import jwt
 from passlib.context import CryptContext
 from typing_extensions import Awaitable
 
+from app.models.models_actions import ActionBase, FullActionResponse
 from app.models.models_user import UserResponseModel, FullUserResponse, User, CompanyDB, CompanyResponse, \
-    FullCompanyResponse
+    FullCompanyResponse, Action
 from config import SECRET_KEY, ALGORITHM, DOMAIN, ALGORITHMS, API_AUDIENCE, ISSUER
 
 
@@ -115,3 +116,25 @@ def toFullCompanyResponse(company: CompanyDB) -> FullCompanyResponse:
     )
 
     return full_company_response
+
+
+def toActionResponse(action: Action) -> ActionBase:
+    action = ActionBase(
+        action_id=action.action_id,
+        user_id=action.user_id,
+        company_id=action.company_id,
+        action_type=action.action_type
+    )
+    return action
+
+
+def toFullActionResponse(action: Action) -> FullActionResponse:
+    action = toActionResponse(action=action)
+
+    full_action_response = FullActionResponse(
+        status_code=0,
+        detail="string",
+        result=action
+    )
+
+    return full_action_response

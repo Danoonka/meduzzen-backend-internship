@@ -1,14 +1,17 @@
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from app.models.models_actions import ActionBase
 from app.models.models_user import Action, UserBase, CompanyBase
+from app.utils.utils import toActionResponse
 
 
 class ActionsService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_invite_action(self, user: UserBase, company: CompanyBase) -> Action:
+    async def create_invite_action(self, user: UserBase, company: CompanyBase) -> ActionBase:
         action = Action(
             user_id=user.user_id,
             company_id=company.company_id,
@@ -18,13 +21,13 @@ class ActionsService:
         await self.session.flush()
         await self.session.commit()
 
-        return action
+        return toActionResponse(action)
 
-    async def get_action_by_id(self, action_id: int) -> Action:
+    async def get_action_by_id(self, action_id: int) -> ActionBase:
         action = await self.session.scalar(
             select(Action).where(Action.action_id == action_id))
 
-        return action
+        return toActionResponse(action)
 
     async def decline_action(self, action_id: int) -> int:
         action = await self.get_action_by_id(action_id=action_id)
@@ -34,15 +37,15 @@ class ActionsService:
             await self.session.commit()
         return action_id
 
-    async def accept_invite_action(self, action: Action) -> Action:
+    async def accept_invite_action(self, action: Action) -> ActionBase:
         action.action_type = "member"
         self.session.add(action)
         await self.session.flush()
         await self.session.commit()
 
-        return action
+        return  toActionResponse(action)
 
-    async def add_owner_action(self, user: UserBase, company: CompanyBase) -> Action:
+    async def add_owner_action(self, user: UserBase, company: CompanyBase) -> ActionBase:
         action = Action(
             user_id=user.user_id,
             company_id=company.company_id,
@@ -52,9 +55,9 @@ class ActionsService:
         await self.session.flush()
         await self.session.commit()
 
-        return action
+        return toActionResponse(action)
 
-    async def create_request_action(self, user_id: int, company_id: int) -> Action:
+    async def create_request_action(self, user_id: int, company_id: int) -> ActionBase:
         action = Action(
             user_id=user_id,
             company_id=company_id,
@@ -64,7 +67,7 @@ class ActionsService:
         await self.session.flush()
         await self.session.commit()
 
-        return action
+        return toActionResponse(action)
 
     async def get_all_user_invites(self, user_id: int) -> list[CompanyBase]:
         result = await self.session.execute(

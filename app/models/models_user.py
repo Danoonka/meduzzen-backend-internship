@@ -111,6 +111,18 @@ class FullUserListResponse(BaseModel):
     pagination: Pagination
 
 
+class CompanyBase(BaseModel):
+    company_id: int
+    company_name: str
+    company_avatar: Optional[str] = None
+
+
+class ListResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: Optional[list[UserBase]] = list[CompanyBase]
+
+
 class UserSignUpRequest(BaseModel):
     user_email: str
     user_password: str
@@ -153,12 +165,6 @@ class Company(CompanyCreateUpdate):
     company_id: int
     owner_id: int
     company_visible: bool
-    company_avatar: Optional[str] = None
-
-
-class CompanyBase(BaseModel):
-    company_id: int
-    company_name: str
     company_avatar: Optional[str] = None
 
 
