@@ -1,7 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models_user import CompanyDB, CompanyBase, GetAllCompanies, CompanyCreateUpdate, CompanyResponse
+from app.models.models_user import CompanyDB, CompanyBase, GetAllCompanies, CompanyCreateUpdate, CompanyResponse, Action
 
 
 class CompanyService:
@@ -40,8 +40,15 @@ class CompanyService:
             company_name=companyData.company_name,
             company_description=companyData.company_description
         )
+
         self.session.add(company)
         await self.session.flush()
+        owner_action = Action(
+            user_id=owner_id,
+            company_id=company.company_id,
+            action_type='owner',
+        )
+        self.session.add(owner_action)
         await self.session.commit()
 
         return company
