@@ -96,7 +96,7 @@ async def get_all_user_invites(user_id: int, actions_service: ActionsService = D
         invites = await actions_service.get_all_user_invites(user_id=user_id)
         return ListResponse(
             status_code=200,
-            details='All invites got',
+            detail='All invites got',
             result=invites
         )
 
@@ -113,7 +113,7 @@ async def get_all_company_invites(company_id: int, actions_service: ActionsServi
         invites = await actions_service.get_all_company_invites(company_id=company_id)
         return ListResponse(
             status_code=200,
-            details='All invited users got',
+            detail='All invited users got',
             result=invites
         )
     else:
@@ -127,7 +127,7 @@ async def get_all_user_request(user_id: int, actions_service: ActionsService = D
         request = await actions_service.get_all_user_request(user_id=user_id)
         return ListResponse(
             status_code=200,
-            details='All request got',
+            detail='All request got',
             result=request
         )
 
@@ -144,7 +144,7 @@ async def get_all_company_request(company_id: int, actions_service: ActionsServi
         request = await actions_service.get_all_company_request(company_id=company_id)
         return ListResponse(
             status_code=200,
-            details='All users request got',
+            detail='All users request got',
             result=request
         )
     else:
@@ -158,7 +158,7 @@ async def get_all_user_companies_endpoint(user_id: int, actions_service: Actions
         companies = await actions_service.get_all_user_companies(user_id=user_id)
         return ListResponse(
             status_code=200,
-            details='All companies got',
+            detail='All companies got',
             result=companies
         )
 
@@ -172,6 +172,59 @@ async def get_all_members_endpoint(company_id: int,
     members = await actions_service.get_all_members(company_id=company_id)
     return ListResponse(
         status_code=200,
-        details='All members got',
+        detail='All members got',
         result=members
     )
+
+
+@action_router.post('/add-admin-role/user/{user_id}/company/{company_id}', response_model=FullActionResponse)
+async def create_admin_role(company_id: int, user_id: int,
+                            actions_service: ActionsService = Depends(get_action_service),
+                            current_user: FullUserResponse = Depends(get_current_user),
+                            company_service: CompanyService = Depends(get_company_service)) -> FullActionResponse:
+    members = await actions_service.get_all_members(company_id=company_id)
+    company = await company_service.get_company_by_id(company_id=company_id)
+    for user in members:
+        if user.user_id == user_id:
+            if current_user.result.user_id == company.company_id:
+                action = await actions_service.create_admin_action(user_id=user_id, company_id=company.company_id)
+                return toFullActionResponse(action)
+            else:
+                raise HTTPException(status_code=403, detail="Unauthorized")
+
+        else:
+            raise Exception("User is not a member")
+
+
+@action_router.get('/get-all-admins/company/{company_id}', response_model=ListResponse)
+async def get_all_admins_endpoint(company_id: int,
+                                  actions_service: ActionsService = Depends(get_action_service),
+                                  company_service: CompanyService = Depends(get_company_service),
+                                  current_user: FullUserResponse = Depends(get_current_user)) -> ListResponse:
+    company = await company_service.get_company_by_id(company_id=company_id)
+    if current_user.result.user_id == company.company_id:
+        admins = await actions_service.get_all_admins(company_id=company_id)
+        return ListResponse(
+            status_code=200,
+            detail='All admins got',
+            result=admins
+        )
+    else:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+
+@action_router.put('/delete_admin/', response_model=DeleteActionResponse)
+async def delete_admin_endpoint(action_id: int, current_user: FullUserResponse = Depends(get_current_user),
+                                actions_service: ActionsService = Depends(get_action_service),
+                                company_service: CompanyService = Depends(get_company_service)) -> DeleteActionResponse:
+    action = await actions_service.get_action_by_id(action_id=action_id)
+    company = await company_service.get_company_by_id(company_id=action.company_id)
+    if current_user.result.user_id == company.owner_id:
+        accepted_request = await actions_service.accept_invite_action(action=action)
+        return DeleteActionResponse(
+            status_code=200,
+            detail="Action decline",
+            result=accepted_request.action_id
+        )
+    else:
+        raise HTTPException(status_code=403, detail="Unauthorized")

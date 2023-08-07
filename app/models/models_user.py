@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, Field
-from typing_extensions import List
+from typing_extensions import List, Union
 
 Base = declarative_base()
 metadata = MetaData()
@@ -120,7 +120,7 @@ class CompanyBase(BaseModel):
 class ListResponse(BaseModel):
     status_code: int
     detail: str
-    result: Optional[list[UserBase]] = list[CompanyBase]
+    result: Optional[Union[List[UserBase], List[CompanyBase]]] = None
 
 
 class UserSignUpRequest(BaseModel):

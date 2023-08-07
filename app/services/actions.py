@@ -23,11 +23,11 @@ class ActionsService:
 
         return toActionResponse(action)
 
-    async def get_action_by_id(self, action_id: int) -> ActionBase:
+    async def get_action_by_id(self, action_id: int) -> Action:
         action = await self.session.scalar(
             select(Action).where(Action.action_id == action_id))
 
-        return toActionResponse(action)
+        return action
 
     async def decline_action(self, action_id: int) -> int:
         action = await self.get_action_by_id(action_id=action_id)
@@ -37,13 +37,13 @@ class ActionsService:
             await self.session.commit()
         return action_id
 
-    async def accept_invite_action(self, action: Action) -> ActionBase:
+    async def accept_invite_action(self, action: Action) -> Action:
         action.action_type = "member"
         self.session.add(action)
         await self.session.flush()
         await self.session.commit()
 
-        return  toActionResponse(action)
+        return action
 
     async def add_owner_action(self, user: UserBase, company: CompanyBase) -> ActionBase:
         action = Action(
@@ -150,6 +150,10 @@ class ActionsService:
                     and_(
                         Action.company_id == company_id,
                         Action.action_type == "owner"
+                    ),
+                    and_(
+                        Action.company_id == company_id,
+                        Action.action_type == "admin"
                     )
                 )
             ).options(selectinload(Action.user))
@@ -178,6 +182,10 @@ class ActionsService:
                     and_(
                         Action.user_id == user_id,
                         Action.action_type == "owner"
+                    ),
+                    and_(
+                        Action.user_id == user_id,
+                        Action.action_type == "admin"
                     )
                 )
             ).options(selectinload(Action.company))
@@ -192,3 +200,33 @@ class ActionsService:
             ) for company in companies
         ]
         return companies_base_models
+
+    async def create_admin_action(self, user_id: int, company_id: int) -> ActionBase:
+        action = Action(
+            user_id=user_id,
+            company_id=company_id,
+            action_type='admin',
+        )
+        self.session.add(action)
+        await self.session.flush()
+        await self.session.commit()
+
+        return toActionResponse(action)
+
+    async def get_all_admins(self, company_id: int) -> list[UserBase]:
+        result = await self.session.execute(
+            select(Action).where(and_(Action.company_id == company_id, Action.action_type == "admin")
+                                 ).options(selectinload(Action.user))
+        )
+        actions = result.scalars().all()
+        users = [action.user for action in actions if action.user]
+        user_base_models = [
+            UserBase(
+                user_id=user.user_id,
+                user_email=user.user_email,
+                user_firstname=user.user_firstname,
+                user_lastname=user.user_lastname,
+                user_avatar=user.user_avatar
+            ) for user in users
+        ]
+        return user_base_models
