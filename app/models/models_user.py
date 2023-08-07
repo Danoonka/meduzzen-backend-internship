@@ -23,6 +23,29 @@ class User(Base):
     user_password = Column(String, nullable=False)
     user_links = relationship("UserLink", backref="user")
     is_superuser = Column(Boolean, default=False)
+    companies = relationship("Action", back_populates="user")
+
+
+class CompanyDB(Base):
+    __tablename__ = "companies"
+
+    company_id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String)
+    company_description = Column(String)
+    owner_id = Column(Integer)
+    company_visible = Column(Boolean, default=True)
+    company_avatar = Column(String)
+    users = relationship("Action", back_populates="company")
+
+
+class Action(Base):
+    __tablename__ = "actions"
+    action_id = Column(Integer(), primary_key=True, autoincrement=True)
+    user_id = Column(ForeignKey('users.user_id'))
+    user = relationship("User", back_populates="companies")
+    company_id = Column(ForeignKey('companies.company_id'))
+    company = relationship("CompanyDB", back_populates="users")
+    action_type = Column(String)
 
 
 class UserResponseModel(BaseModel):
@@ -88,6 +111,18 @@ class FullUserListResponse(BaseModel):
     pagination: Pagination
 
 
+class CompanyBase(BaseModel):
+    company_id: int
+    company_name: str
+    company_avatar: Optional[str] = None
+
+
+class ListResponse(BaseModel):
+    status_code: int
+    detail: str
+    result: Optional[list[UserBase]] = list[CompanyBase]
+
+
 class UserSignUpRequest(BaseModel):
     user_email: str
     user_password: str
@@ -130,23 +165,6 @@ class Company(CompanyCreateUpdate):
     company_id: int
     owner_id: int
     company_visible: bool
-    company_avatar: Optional[str] = None
-
-
-class CompanyDB(Base):
-    __tablename__ = "companies"
-
-    company_id = Column(Integer, primary_key=True, index=True)
-    company_name = Column(String)
-    company_description = Column(String)
-    owner_id = Column(Integer)
-    company_visible = Column(Boolean, default=True)
-    company_avatar = Column(String)
-
-
-class CompanyBase(BaseModel):
-    company_id: int
-    company_name: str
     company_avatar: Optional[str] = None
 
 
