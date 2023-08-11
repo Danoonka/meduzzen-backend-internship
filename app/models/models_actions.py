@@ -13,9 +13,8 @@ class FullActionResponse(BaseModel):
     detail: str
     result: ActionBase
 
+
 class DeleteActionResponse(BaseModel):
     status_code: int
     detail: str
     result: int
-
-

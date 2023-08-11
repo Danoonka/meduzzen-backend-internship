@@ -6,8 +6,9 @@ from passlib.context import CryptContext
 from typing_extensions import Awaitable
 
 from app.models.models_actions import ActionBase, FullActionResponse
+from app.models.models_quiz import QuizBase, FullQuizResponse
 from app.models.models_user import UserResponseModel, FullUserResponse, User, CompanyDB, CompanyResponse, \
-    FullCompanyResponse, Action
+    FullCompanyResponse, Action, Quiz
 from config import SECRET_KEY, ALGORITHM, DOMAIN, ALGORITHMS, API_AUDIENCE, ISSUER
 
 
@@ -138,3 +139,26 @@ def toFullActionResponse(action: Action) -> FullActionResponse:
     )
 
     return full_action_response
+
+
+def toQuizResponse(quiz: Quiz) -> QuizBase:
+    quiz = QuizBase(
+        quiz_id=quiz.quiz_id,
+        quiz_name=quiz.quiz_name,
+        quiz_frequency=quiz.quiz_frequency,
+        company_id=quiz.company_id,
+        created_by=quiz.created_by,
+    )
+
+    return quiz
+
+
+def toFullQuizResponse(quiz: Quiz, status_code: int, detail: str) -> FullQuizResponse:
+    quiz = toQuizResponse(quiz=quiz)
+    full_quiz_response = FullQuizResponse(
+        status_code=status_code,
+        detail=detail,
+        result=quiz
+    )
+
+    return full_quiz_response

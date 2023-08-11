@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, Field
@@ -36,6 +36,7 @@ class CompanyDB(Base):
     company_visible = Column(Boolean, default=True)
     company_avatar = Column(String)
     users = relationship("Action", back_populates="company")
+    quizzes = relationship("Quiz", back_populates="company")
 
 
 class Action(Base):
@@ -46,6 +47,29 @@ class Action(Base):
     company_id = Column(ForeignKey('companies.company_id'))
     company = relationship("CompanyDB", back_populates="users")
     action_type = Column(String)
+
+
+class Quiz(Base):
+    __tablename__ = "quizzes"
+    quiz_id = Column(Integer(), primary_key=True, index=True)
+    quiz_name = Column(String)
+    quiz_title = Column(String)
+    quiz_description = Column(String)
+    quiz_frequency = Column(Integer)
+    created_by = Column(ForeignKey('users.user_id'))
+    company_id = Column(ForeignKey('companies.company_id'))
+    question_list = relationship("Question", back_populates="quiz")
+    company = relationship("CompanyDB", back_populates="quizzes")
+
+
+class Question(Base):
+    __tablename__ = "questions"
+    quiz_id = Column(ForeignKey('quizzes.quiz_id'))
+    question_id = Column(Integer(), primary_key=True, index=True)
+    question_text = Column(String)
+    question_answers = Column(ARRAY(String))
+    question_correct_answer = Column(Integer)
+    quiz = relationship("Quiz", back_populates="question_list")
 
 
 class UserResponseModel(BaseModel):
@@ -75,6 +99,7 @@ class UserBase(BaseModel):
     user_firstname: str
     user_lastname: str
     user_avatar: Optional[str] = None
+    action_id: Optional[int] = None
 
 
 class UserCreate(UserBase):
@@ -115,6 +140,8 @@ class CompanyBase(BaseModel):
     company_id: int
     company_name: str
     company_avatar: Optional[str] = None
+    action_id: Optional[int] = None
+    owner_id: Optional[int] = None
 
 
 class ListResponse(BaseModel):
