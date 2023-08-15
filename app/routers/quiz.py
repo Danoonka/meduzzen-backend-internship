@@ -97,7 +97,7 @@ async def add_question_endpoint(quiz_id: int, question_data: QuestionBase,
                                 authorized_data=Depends(authorize_quiz_access('quiz_id')),
                                 quiz_service: QuizService = Depends(get_quiz_service)
                                 ) -> FullQuizResponse:
-    quiz, _ = authorized_data
+    quiz = authorized_data[0]
     await quiz_service.add_question(quiz_id=quiz_id, question_data=question_data)
     return toFullQuizResponse(quiz=quiz, status_code=200, detail="Quiz updated successfully")
 
@@ -107,7 +107,7 @@ async def update_question_endpoint(question_id: int, question_data: QuestionBase
                                    authorized_data=Depends(authorize_quiz_access('quiz_id')),
                                    quiz_service: QuizService = Depends(get_quiz_service)
                                    ) -> FullQuizResponse:
-    quiz, _ = authorized_data
+    quiz = authorized_data[0]
     if len(question_data.question_answers) < 2:
         raise HTTPException(status_code=400, detail="Question must have at least 2 answers")
     await quiz_service.update_question(question_id=question_id, question_data=question_data)
@@ -119,7 +119,7 @@ async def delete_question_endpoint(quiz_id: int, question_id: int,
                                    authorized_data=Depends(authorize_quiz_access('quiz_id')),
                                    quiz_service: QuizService = Depends(get_quiz_service)
                                    ) -> DeleteQuizResponse:
-    quiz, _ = authorized_data
+    quiz = authorized_data[0]
     await quiz_service.delete_question(question_id=question_id, quiz_id=quiz_id)
     return DeleteQuizResponse(
         status_code=200,
@@ -130,7 +130,7 @@ async def delete_question_endpoint(quiz_id: int, question_id: int,
 
 @quiz_router.get('/quiz/{quiz_id}', response_model=FullQuizResponse)
 async def get_quiz_by_id_endpoint(authorized_data=Depends(authorize_quiz_access('quiz_id'))) -> FullQuizResponse:
-    quiz, _ = authorized_data
+    quiz = authorized_data[0]
     return toFullQuizResponse(
         status_code=200,
         detail="Get quiz successfully",
