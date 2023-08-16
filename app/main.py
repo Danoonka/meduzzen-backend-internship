@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.routers.actions import action_router
 from app.routers.authintification import auth_router
 from app.routers.company import company_router
+from app.routers.quiz import quiz_router
 from app.routers.user import user_router
 
 app = FastAPI()
@@ -37,3 +38,4 @@ app.include_router(user_router, prefix="/users", tags=["Users"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(company_router, prefix="/company", tags=["Companies"])
 app.include_router(action_router, prefix="/actions", tags=["Actions"])
+app.include_router(quiz_router, prefix="/quiz", tags=["Quizzes"])

@@ -75,14 +75,15 @@ class ActionsService:
                 selectinload(Action.company))
         )
         actions = result.scalars().all()
-        companies = [action.company for action in actions if action.company]
 
         companies_base_models = [
             CompanyBase(
-                company_id=company.company_id,
-                company_name=company.company_name,
-                company_avatar=company.company_avatar
-            ) for company in companies
+                company_id=action.company.company_id,
+                company_name=action.company.company_name,
+                company_avatar=action.company.company_avatar,
+                action_id=action.action_id,
+                owner_id=action.company.owner_id
+            ) for action in actions
         ]
         return companies_base_models
 
@@ -92,15 +93,15 @@ class ActionsService:
                 selectinload(Action.user))
         )
         actions = result.scalars().all()
-        users = [action.user for action in actions if action.user]
         user_base_models = [
             UserBase(
-                user_id=user.user_id,
-                user_email=user.user_email,
-                user_firstname=user.user_firstname,
-                user_lastname=user.user_lastname,
-                user_avatar=user.user_avatar
-            ) for user in users
+                user_id=action.user.user_id,
+                user_email=action.user.user_email,
+                user_firstname=action.user.user_firstname,
+                user_lastname=action.user.user_lastname,
+                user_avatar=action.user.user_avatar,
+                action_id=action.action_id
+            ) for action in actions
         ]
         return user_base_models
 
@@ -110,14 +111,15 @@ class ActionsService:
                 selectinload(Action.company))
         )
         actions = result.scalars().all()
-        companies = [action.company for action in actions if action.company]
 
         companies_base_models = [
             CompanyBase(
-                company_id=company.company_id,
-                company_name=company.company_name,
-                company_avatar=company.company_avatar
-            ) for company in companies
+                company_id=action.company.company_id,
+                company_name=action.company.company_name,
+                company_avatar=action.company.company_avatar,
+                action_id=action.action_id,
+                owner_id=action.company.owner_id
+            ) for action in actions
         ]
         return companies_base_models
 
@@ -127,15 +129,15 @@ class ActionsService:
                 selectinload(Action.user))
         )
         actions = result.scalars().all()
-        users = [action.user for action in actions if action.user]
         user_base_models = [
             UserBase(
-                user_id=user.user_id,
-                user_email=user.user_email,
-                user_firstname=user.user_firstname,
-                user_lastname=user.user_lastname,
-                user_avatar=user.user_avatar
-            ) for user in users
+                user_id=action.user.user_id,
+                user_email=action.user.user_email,
+                user_firstname=action.user.user_firstname,
+                user_lastname=action.user.user_lastname,
+                user_avatar=action.user.user_avatar,
+                action_id=action.action_id
+            ) for action in actions
         ]
         return user_base_models
 
@@ -159,15 +161,15 @@ class ActionsService:
             ).options(selectinload(Action.user))
         )
         actions = result.scalars().all()
-        users = [action.user for action in actions if action.user]
         user_base_models = [
             UserBase(
-                user_id=user.user_id,
-                user_email=user.user_email,
-                user_firstname=user.user_firstname,
-                user_lastname=user.user_lastname,
-                user_avatar=user.user_avatar
-            ) for user in users
+                user_id=action.user.user_id,
+                user_email=action.user.user_email,
+                user_firstname=action.user.user_firstname,
+                user_lastname=action.user.user_lastname,
+                user_avatar=action.user.user_avatar,
+                action_id=action.action_id
+            ) for action in actions
         ]
         return user_base_models
 
@@ -191,27 +193,24 @@ class ActionsService:
             ).options(selectinload(Action.company))
         )
         actions = result.scalars().all()
-        companies = [action.company for action in actions if action.company]
         companies_base_models = [
             CompanyBase(
-                company_id=company.company_id,
-                company_name=company.company_name,
-                company_avatar=company.company_avatar
-            ) for company in companies
+                company_id=action.company.company_id,
+                company_name=action.company.company_name,
+                company_avatar=action.company.company_avatar,
+                action_id=action.action_id,
+                owner_id=action.company.owner_id
+            ) for action in actions
         ]
         return companies_base_models
 
-    async def create_admin_action(self, user_id: int, company_id: int) -> ActionBase:
-        action = Action(
-            user_id=user_id,
-            company_id=company_id,
-            action_type='admin',
-        )
+    async def create_admin_action(self, action: Action) -> Action:
+        action.action_type = "admin"
         self.session.add(action)
         await self.session.flush()
         await self.session.commit()
 
-        return toActionResponse(action)
+        return action
 
     async def get_all_admins(self, company_id: int) -> list[UserBase]:
         result = await self.session.execute(
@@ -219,14 +218,14 @@ class ActionsService:
                                  ).options(selectinload(Action.user))
         )
         actions = result.scalars().all()
-        users = [action.user for action in actions if action.user]
         user_base_models = [
             UserBase(
-                user_id=user.user_id,
-                user_email=user.user_email,
-                user_firstname=user.user_firstname,
-                user_lastname=user.user_lastname,
-                user_avatar=user.user_avatar
-            ) for user in users
+                user_id=action.user.user_id,
+                user_email=action.user.user_email,
+                user_firstname=action.user.user_firstname,
+                user_lastname=action.user.user_lastname,
+                user_avatar=action.user.user_avatar,
+                action_id=action.action_id
+            ) for action in actions
         ]
         return user_base_models
