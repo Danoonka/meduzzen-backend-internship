@@ -86,5 +86,3 @@ class UserService:
             await self.session.flush()
             await self.session.commit()
         return user.user_id
-
-

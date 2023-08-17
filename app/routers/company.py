@@ -3,8 +3,9 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.db_postgres_handler import get_session
-from app.models.models_user import CompanyCreateUpdate, FullUserResponse, FullCompanyResponse, FullCompanyListResponse, \
-    CompanyList, Pagination, DeleteCompanyResponse, CompanyId
+from app.models.models_user import FullUserResponse
+from app.models.models_company import CompanyCreateUpdate, FullCompanyResponse, CompanyList, FullCompanyListResponse, \
+    CompanyId, DeleteCompanyResponse, Pagination
 from app.routers.authintification import get_current_user
 from app.services.company import CompanyService
 from app.utils.utils import toFullCompanyResponse

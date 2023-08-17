@@ -1,9 +1,13 @@
 from typing import Optional
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData, ARRAY
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, MetaData, ARRAY, Float, DateTime
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, Field
-from typing_extensions import List, Union
+from typing_extensions import List, Union, Dict
+from _datetime import datetime
+
+from app.models.models_company import CompanyBase
 
 Base = declarative_base()
 metadata = MetaData()
@@ -62,6 +66,26 @@ class Quiz(Base):
     company = relationship("CompanyDB", back_populates="quizzes")
 
 
+class Result(Base):
+    __tablename__ = "results"
+    result_id = Column(Integer(), primary_key=True, index=True)
+    right_answers = Column(Integer())
+    answers = Column(Integer())
+    company_id = Column(ForeignKey('companies.company_id'))
+    user_id = Column(ForeignKey('users.user_id'))
+    quiz_id = Column(ForeignKey('quizzes.quiz_id'))
+    answer_list = relationship("Answer")
+    passed_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Answer(Base):
+    __tablename__ = "answers"
+    answer_id = Column(Integer(), primary_key=True, index=True)
+    quiz_id = Column(ForeignKey('quizzes.quiz_id'))
+    answers = Column(JSONB)
+    result_id = Column(ForeignKey('results.result_id'))
+
+
 class Question(Base):
     __tablename__ = "questions"
     quiz_id = Column(ForeignKey('quizzes.quiz_id'))
@@ -70,6 +94,14 @@ class Question(Base):
     question_answers = Column(ARRAY(String))
     question_correct_answer = Column(Integer)
     quiz = relationship("Quiz", back_populates="question_list")
+
+
+class UserLink(Base):
+    __tablename__ = 'user_links'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    link = Column(String)
 
 
 class UserResponseModel(BaseModel):
@@ -83,14 +115,6 @@ class UserResponseModel(BaseModel):
     user_phone: Optional[int] = None
     user_links: List[str] = []
     is_superuser: bool = Field(default=False)
-
-
-class UserLink(Base):
-    __tablename__ = 'user_links'
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.user_id'))
-    link = Column(String)
 
 
 class UserBase(BaseModel):
@@ -136,14 +160,6 @@ class FullUserListResponse(BaseModel):
     pagination: Pagination
 
 
-class CompanyBase(BaseModel):
-    company_id: int
-    company_name: str
-    company_avatar: Optional[str] = None
-    action_id: Optional[int] = None
-    owner_id: Optional[int] = None
-
-
 class ListResponse(BaseModel):
     status_code: int
     detail: str
@@ -183,54 +199,19 @@ class GetAllUsers(BaseModel):
     total_users: int
 
 
-class CompanyCreateUpdate(BaseModel):
-    company_name: str
-    company_description: str
+# class AnswerBase(BaseModel):
+#     question_id: int
+#     answer_id: int
 
 
-class Company(CompanyCreateUpdate):
+class AnswerList(BaseModel):
+    answers: list[Dict[str, str]]
+
+
+class ResultBase(BaseModel):
+    result_id: int
+    right_answers: int
+    answers: int
     company_id: int
-    owner_id: int
-    company_visible: bool
-    company_avatar: Optional[str] = None
-
-
-class GetAllCompanies(BaseModel):
-    company_list: list[CompanyBase]
-    total_companies: int
-
-
-class CompanyResponse(BaseModel):
-    company_id: int
-    company_name: str
-    company_description: str
-    owner_id: int
-    company_visible: bool
-    company_avatar: Optional[str] = None
-
-
-class FullCompanyResponse(BaseModel):
-    status_code: int
-    detail: str
-    result: CompanyResponse
-
-
-class CompanyList(BaseModel):
-    companies: list[CompanyBase]
-
-
-class FullCompanyListResponse(BaseModel):
-    status_code: int
-    detail: str
-    result: CompanyList
-    pagination: Pagination
-
-
-class CompanyId(BaseModel):
-    company_id: int
-
-
-class DeleteCompanyResponse(BaseModel):
-    status_code: int
-    detail: str
-    result: CompanyId
+    user_id: int
+    quiz_id: int

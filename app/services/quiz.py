@@ -1,8 +1,9 @@
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase
-from app.models.models_user import Quiz, Question
+from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase, FullQuizBase
+from app.models.models_user import Quiz, Question, AnswerList, Answer, Result, ResultBase
 
 
 class QuizService:
@@ -74,8 +75,9 @@ class QuizService:
         else:
             raise Exception("Question does not exist")
 
-    async def get_quiz_by_id(self, quiz_id: int) -> QuizBase:
-        return await self.session.scalar(select(Quiz).where(Quiz.quiz_id == quiz_id))
+    async def get_quiz_by_id(self, quiz_id: int) -> FullQuizBase:
+        return await self.session.scalar(select(Quiz).where(Quiz.quiz_id == quiz_id).options(
+            selectinload(Quiz.question_list)))
 
     async def get_question_by_id(self, question_id: int) -> QuestionBase:
         return await self.session.scalar(select(Question).where(Question.question_id == question_id))
@@ -98,10 +100,73 @@ class QuizService:
         self.session.add(question)
         return question
 
-    async def _delete_questions_by_quiz_id(self, quiz_id: int):
+    async def _delete_questions_by_quiz_id(self, quiz_id: int) -> int:
         questions = await self.session.execute(select(Question).where(Question.quiz_id == quiz_id))
         for question in questions.scalars().all():
             await self.session.delete(question)
+            return quiz_id
 
     async def _get_question_count_by_quiz_id(self, quiz_id: int) -> int:
         return await self.session.execute(select(Question).where(Question.quiz_id == quiz_id)).scalar()
+
+    async def take_quiz(self, quiz_id: int, answers: AnswerList, company_id: int, user_id: int) -> ResultBase:
+
+        counter = 0
+        quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
+        for question in quiz.question_list:
+            for answer in answers.answers:
+                print(answer)
+                for question_id, answer_value in answer.items():
+                    print(question.question_id, question_id)
+                    print(question.question_correct_answer, answer_value)
+                    if question.question_id == int(question_id) and question.question_correct_answer == int(
+                            answer_value):
+                        counter += 1
+
+        new_result = Result(
+            right_answers=counter,
+            answers=len(quiz.question_list),
+            company_id=company_id,
+            user_id=user_id,
+            quiz_id=quiz_id
+        )
+
+        self.session.add(new_result)
+        await self.session.flush()
+        await self.session.commit()
+        return new_result
+
+    async def get_global_rate_for_user(self, user_id) -> int:
+        all_user_results = await self.session.execute(select(Result).where(Result.user_id == user_id))
+        results = [ResultBase(**result.__dict__) for result in all_user_results.scalars().all()]
+
+        right_answers = 0
+        answers = 0
+        for result in results:
+            right_answers += result.right_answers
+            answers += result.answers
+        return round(right_answers / answers, 2)
+
+    async def get_quiz_rate_for_user(self, user_id, quiz_id: int) -> int:
+        all_user_results = await self.session.execute(
+            select(Result).where(and_(Result.user_id == user_id, Result.quiz_id == quiz_id)))
+        results = [ResultBase(**result.__dict__) for result in all_user_results.scalars().all()]
+
+        right_answers = 0
+        answers = 0
+        for result in results:
+            right_answers += result.right_answers
+            answers += result.answers
+        return round(right_answers / answers, 2)
+
+    async def get_company_rate_for_user(self, user_id, company_id: int) -> int:
+        all_user_results = await self.session.execute(
+            select(Result).where(and_(Result.user_id == user_id, Result.company_id == company_id)))
+        results = [ResultBase(**result.__dict__) for result in all_user_results.scalars().all()]
+
+        right_answers = 0
+        answers = 0
+        for result in results:
+            right_answers += result.right_answers
+            answers += result.answers
+        return round(right_answers / answers, 2)

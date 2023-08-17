@@ -1,7 +1,8 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models_user import CompanyDB, CompanyBase, GetAllCompanies, CompanyCreateUpdate, CompanyResponse, Action
+from app.models.models_user import CompanyDB, Action
+from app.models.models_company import CompanyBase, CompanyCreateUpdate, GetAllCompanies, CompanyResponse
 
 
 class CompanyService:
