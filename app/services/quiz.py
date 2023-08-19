@@ -1,9 +1,12 @@
+from typing import Optional
+
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase, FullQuizBase
-from app.models.models_user import Quiz, Question, AnswerList, Answer, Result, ResultBase
+from app.db.redistool.tools import RedisTools
+from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase, FullQuizBase, RedisResults
+from app.models.models_user import Quiz, Question, AnswerList, Result, ResultBase
 
 
 class QuizService:
@@ -109,10 +112,13 @@ class QuizService:
     async def _get_question_count_by_quiz_id(self, quiz_id: int) -> int:
         return await self.session.execute(select(Question).where(Question.quiz_id == quiz_id)).scalar()
 
-    async def take_quiz(self, quiz_id: int, answers: AnswerList, company_id: int, user_id: int) -> ResultBase:
-
+    async def take_quiz(self, quiz_id: int, answers: AnswerList, company_id: int, user_id: int) -> Optional[ResultBase]:
         counter = 0
         quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
+
+        # Create an instance of RedisTools
+        redis_tools = RedisTools()
+
         for question in quiz.question_list:
             if answers.answers[str(question.question_id)] == str(question.question_correct_answer):
                 counter += 1
@@ -128,6 +134,7 @@ class QuizService:
         self.session.add(new_result)
         await self.session.flush()
         await self.session.commit()
+
         return new_result
 
     async def get_global_rate_for_user(self, user_id) -> int:

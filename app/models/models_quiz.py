@@ -58,3 +58,13 @@ class QuizListResponse(BaseModel):
 class RateBase(BaseModel):
     type: str
     rate: int
+
+
+class RedisResults(BaseModel):
+    user_id: int
+    company_id: int
+    quiz_id: int
+    question_id: int
+    question_text: str
+    user_answer: str
+    is_correct: bool
