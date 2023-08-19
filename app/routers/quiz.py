@@ -159,7 +159,7 @@ async def take_quiz_endpoint(company_id: int, user_id: int, answers: AnswerList,
 async def get_global_rate_for_user_endpoint(user_id: int, quiz_service: QuizService = Depends(get_quiz_service),
                                             authorized_data=Depends(authorize_quiz_access('quiz_id'))) -> RateBase:
     if authorized_data:
-        rate = await quiz_service.get_global_rate_for_user(user_id)
+        rate = await quiz_service.get_global_rate_for_user(user_id=user_id)
         return RateBase(
             type="global",
             rate=rate
@@ -171,7 +171,7 @@ async def get_global_rate_for_user_endpoint(user_id: int,
                                             quiz_service: QuizService = Depends(get_quiz_service),
                                             authorized_data=Depends(authorize_quiz_access('quiz_id'))) -> RateBase:
     quiz = authorized_data
-    rate = await quiz_service.get_quiz_rate_for_user(user_id, quiz.quiz_id)
+    rate = await quiz_service.get_quiz_rate_for_user(user_id=user_id, quiz_id=quiz.quiz_id)
     return RateBase(
         type="by quiz",
         rate=rate
@@ -183,7 +183,7 @@ async def get_global_rate_for_user_endpoint(user_id: int, company_id: int,
                                             quiz_service: QuizService = Depends(get_quiz_service),
                                             authorized_data=Depends(authorize_quiz_access('quiz_id'))) -> RateBase:
     if authorized_data:
-        rate = await quiz_service.get_company_rate_for_user(user_id, company_id)
+        rate = await quiz_service.get_company_rate_for_user(user_id=user_id, company_id=company_id)
         return RateBase(
             type="by company",
             rate=rate

@@ -114,14 +114,8 @@ class QuizService:
         counter = 0
         quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
         for question in quiz.question_list:
-            for answer in answers.answers:
-                print(answer)
-                for question_id, answer_value in answer.items():
-                    print(question.question_id, question_id)
-                    print(question.question_correct_answer, answer_value)
-                    if question.question_id == int(question_id) and question.question_correct_answer == int(
-                            answer_value):
-                        counter += 1
+            if answers.answers[str(question.question_id)] == str(question.question_correct_answer):
+                counter += 1
 
         new_result = Result(
             right_answers=counter,

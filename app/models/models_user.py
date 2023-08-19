@@ -205,7 +205,7 @@ class GetAllUsers(BaseModel):
 
 
 class AnswerList(BaseModel):
-    answers: list[Dict[str, str]]
+    answers: Dict[str, str]
 
 
 class ResultBase(BaseModel):
