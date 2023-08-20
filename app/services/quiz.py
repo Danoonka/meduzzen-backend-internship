@@ -1,12 +1,13 @@
+import json
 from typing import Optional
 
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.redistool.tools import RedisTools
+from app.db.redistool.tools import add_quiz
 from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase, FullQuizBase, RedisResults
-from app.models.models_user import Quiz, Question, AnswerList, Result, ResultBase
+from app.models.models_user import Quiz, Question, AnswerList, Result, ResultBase, QuestionsForRedis
 
 
 class QuizService:
@@ -25,7 +26,7 @@ class QuizService:
         await self.session.flush()
 
         for question_data in quiz_data.question_list:
-            await self._create_question(quiz.quiz_id, question_data)
+            await self._create_question(quiz_id=quiz.quiz_id, question_data=question_data)
 
         await self.session.commit()
         return quiz
@@ -39,10 +40,10 @@ class QuizService:
         return quiz
 
     async def delete_quiz(self, quiz_id: int) -> int:
-        quiz = await self.get_quiz_by_id(quiz_id)
+        quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
 
         if quiz:
-            await self._delete_questions_by_quiz_id(quiz_id)
+            await self._delete_questions_by_quiz_id(quiz_id=quiz_id)
             await self.session.delete(quiz)
             await self.session.commit()
             return quiz.quiz_id
@@ -50,7 +51,7 @@ class QuizService:
             raise Exception("Quiz does not exist")
 
     async def add_question(self, quiz_id, question_data: QuestionBase) -> QuestionBase:
-        question = await self._create_question(quiz_id, question_data)
+        question = await self._create_question(quiz_id=quiz_id, question_data=question_data)
         await self.session.commit()
         return question
 
@@ -65,7 +66,7 @@ class QuizService:
 
     async def delete_question(self, question_id: int, quiz_id: int) -> int:
         question = await self.get_question_by_id(question_id=question_id)
-        questions_count = await self._get_question_count_by_quiz_id(quiz_id)
+        questions_count = await self._get_question_count_by_quiz_id(quiz_id= quiz_id)
 
         if questions_count <= 2:
             raise Exception("Quiz must have at least 2 questions")
@@ -116,12 +117,24 @@ class QuizService:
         counter = 0
         quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
 
-        # Create an instance of RedisTools
-        redis_tools = RedisTools()
-
+        questions = []
         for question in quiz.question_list:
+            item = QuestionsForRedis(
+                question_id=str(question.question_id),
+                question_text=question.question_text,
+                answer=question.question_answers[int(answers.answers[str(question.question_id)])],
+                isCorrect=question.question_correct_answer == int(answers.answers[str(question.question_id)])
+            )
+            question_dict = item.dict()
+            question_json = json.dumps(question_dict)
+            questions.append(question_json)
             if answers.answers[str(question.question_id)] == str(question.question_correct_answer):
                 counter += 1
+
+        await add_quiz(user_id=str(user_id),
+                       company_id=str(company_id),
+                       quiz_id=str(quiz_id),
+                       questions=questions)
 
         new_result = Result(
             right_answers=counter,

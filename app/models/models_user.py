@@ -215,3 +215,18 @@ class ResultBase(BaseModel):
     company_id: int
     user_id: int
     quiz_id: int
+
+
+class QuestionsForRedis(BaseModel):
+    question_id: str
+    question_text: str
+    answer: str
+    isCorrect: bool
+
+    def to_dict(self):
+        return {
+            "question_id": self.question_id,
+            "question_text": self.question_text,
+            "answer": self.answer,
+            "isCorrect": self.isCorrect
+        }
