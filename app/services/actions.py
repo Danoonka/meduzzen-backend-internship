@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.models_actions import ActionBase
-from app.models.models_user import Action, UserBase, CompanyBase
+from app.models.models_user import Action, UserBase
+from app.models.models_company import CompanyBase
 from app.utils.utils import toActionResponse
 
 

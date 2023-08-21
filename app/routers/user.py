@@ -91,4 +91,3 @@ async def delete_existing_user(user_id: int,
             user_id=user_id
         )
     )
-

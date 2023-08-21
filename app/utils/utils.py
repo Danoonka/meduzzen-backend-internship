@@ -7,8 +7,8 @@ from typing_extensions import Awaitable
 
 from app.models.models_actions import ActionBase, FullActionResponse
 from app.models.models_quiz import QuizBase, FullQuizResponse
-from app.models.models_user import UserResponseModel, FullUserResponse, User, CompanyDB, CompanyResponse, \
-    FullCompanyResponse, Action, Quiz
+from app.models.models_user import UserResponseModel, FullUserResponse, User, CompanyDB, Action, Quiz
+from app.models.models_company import CompanyResponse, FullCompanyResponse
 from config import SECRET_KEY, ALGORITHM, DOMAIN, ALGORITHMS, API_AUDIENCE, ISSUER
 
 
