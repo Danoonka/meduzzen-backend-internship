@@ -66,7 +66,7 @@ class QuizService:
 
     async def delete_question(self, question_id: int, quiz_id: int) -> int:
         question = await self.get_question_by_id(question_id=question_id)
-        questions_count = await self._get_question_count_by_quiz_id(quiz_id= quiz_id)
+        questions_count = await self._get_question_count_by_quiz_id(quiz_id=quiz_id)
 
         if questions_count <= 2:
             raise Exception("Quiz must have at least 2 questions")
@@ -131,11 +131,6 @@ class QuizService:
             if answers.answers[str(question.question_id)] == str(question.question_correct_answer):
                 counter += 1
 
-        await add_quiz(user_id=str(user_id),
-                       company_id=str(company_id),
-                       quiz_id=str(quiz_id),
-                       questions=questions)
-
         new_result = Result(
             right_answers=counter,
             answers=len(quiz.question_list),
@@ -147,7 +142,10 @@ class QuizService:
         self.session.add(new_result)
         await self.session.flush()
         await self.session.commit()
-
+        await add_quiz(user_id=str(user_id),
+                       company_id=str(company_id),
+                       quiz_id=str(quiz_id),
+                       questions=questions)
         return new_result
 
     async def get_global_rate_for_user(self, user_id) -> int:
