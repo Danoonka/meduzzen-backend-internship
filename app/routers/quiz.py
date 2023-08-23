@@ -1,10 +1,8 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.db_postgres_handler import get_session
 from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, FullQuizResponse, DeleteQuizResponse, \
-    QuizListResponse, FullQuizBase, RateBase
+    QuizListResponse, FullQuizBase, RateBase, FullQuizResponseWithQuestion, QuestionBaseWithId
 from app.models.models_user import FullUserResponse, AnswerList, ResultBase
 from app.routers.actions import get_action_service
 from app.routers.authintification import get_current_user
@@ -129,10 +127,30 @@ async def delete_question_endpoint(question_id: int,
     )
 
 
-@quiz_router.get('/quiz/{quiz_id}', response_model=FullQuizResponse)
-async def get_quiz_by_id_endpoint(authorized_data=Depends(authorize_quiz_access('quiz_id'))) -> FullQuizResponse:
-    quiz = authorized_data
-    return quiz
+@quiz_router.get('/quiz/{quiz_id}')
+async def get_quiz_by_id_endpoint(quiz_id: int, quiz_service: QuizService = Depends(get_quiz_service)) -> FullQuizResponseWithQuestion:
+    quiz = quiz = await quiz_service.get_quiz_by_id(quiz_id=quiz_id)
+    question_list = []
+    for question in quiz.question_list:
+        question_base = QuestionBaseWithId(
+            question_id= question.question_id,
+            question_text=question.question_text,
+            question_answers=question.question_answers,
+            question_correct_answer=question.question_correct_answer
+        )
+        question_list.append(question_base)
+    return FullQuizResponseWithQuestion(
+        status_code=200,
+        detail="Quiz get successfully",
+        result=FullQuizBase(
+            quiz_id=quiz.quiz_id,
+            quiz_name=quiz.quiz_name,
+            quiz_frequency=quiz.quiz_frequency,
+            company_id=quiz.company_id,
+            created_by=quiz.created_by,
+            question_list=question_list
+        )
+    )
 
 
 @quiz_router.get('/question/{question_id}', response_model=QuestionBase)
@@ -151,7 +169,8 @@ async def take_quiz_endpoint(company_id: int, user_id: int, answers: AnswerList,
                              authorized_data=Depends(authorize_quiz_access('quiz_id')),
                              quiz_service: QuizService = Depends(get_quiz_service)) -> ResultBase:
     quiz = authorized_data
-    result = await quiz_service.take_quiz(quiz_id=quiz.quiz_id, answers=answers, company_id=company_id, user_id=user_id)
+    result = await quiz_service.take_quiz(quiz_id=quiz.quiz_id, answers=answers, company_id=company_id,
+                                          user_id=user_id)
     return result
 
 

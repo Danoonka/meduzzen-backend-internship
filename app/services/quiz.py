@@ -1,9 +1,13 @@
+import json
+from typing import Optional
+
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase, FullQuizBase
-from app.models.models_user import Quiz, Question, AnswerList, Answer, Result, ResultBase
+from app.db.redistool.tools import add_quiz
+from app.models.models_quiz import QuizToCreate, QuizToUpdate, QuestionBase, QuizBase, FullQuizBase, RedisResults
+from app.models.models_user import Quiz, Question, AnswerList, Result, ResultBase, QuestionsForRedis
 
 
 class QuizService:
@@ -22,7 +26,7 @@ class QuizService:
         await self.session.flush()
 
         for question_data in quiz_data.question_list:
-            await self._create_question(quiz.quiz_id, question_data)
+            await self._create_question(quiz_id=quiz.quiz_id, question_data=question_data)
 
         await self.session.commit()
         return quiz
@@ -36,10 +40,10 @@ class QuizService:
         return quiz
 
     async def delete_quiz(self, quiz_id: int) -> int:
-        quiz = await self.get_quiz_by_id(quiz_id)
+        quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
 
         if quiz:
-            await self._delete_questions_by_quiz_id(quiz_id)
+            await self._delete_questions_by_quiz_id(quiz_id=quiz_id)
             await self.session.delete(quiz)
             await self.session.commit()
             return quiz.quiz_id
@@ -47,7 +51,7 @@ class QuizService:
             raise Exception("Quiz does not exist")
 
     async def add_question(self, quiz_id, question_data: QuestionBase) -> QuestionBase:
-        question = await self._create_question(quiz_id, question_data)
+        question = await self._create_question(quiz_id=quiz_id, question_data=question_data)
         await self.session.commit()
         return question
 
@@ -62,7 +66,7 @@ class QuizService:
 
     async def delete_question(self, question_id: int, quiz_id: int) -> int:
         question = await self.get_question_by_id(question_id=question_id)
-        questions_count = await self._get_question_count_by_quiz_id(quiz_id)
+        questions_count = await self._get_question_count_by_quiz_id(quiz_id=quiz_id)
 
         if questions_count <= 2:
             raise Exception("Quiz must have at least 2 questions")
@@ -76,8 +80,9 @@ class QuizService:
             raise Exception("Question does not exist")
 
     async def get_quiz_by_id(self, quiz_id: int) -> FullQuizBase:
-        return await self.session.scalar(select(Quiz).where(Quiz.quiz_id == quiz_id).options(
+        quiz = await self.session.scalar(select(Quiz).where(Quiz.quiz_id == quiz_id).options(
             selectinload(Quiz.question_list)))
+        return quiz
 
     async def get_question_by_id(self, question_id: int) -> QuestionBase:
         return await self.session.scalar(select(Question).where(Question.question_id == question_id))
@@ -109,11 +114,21 @@ class QuizService:
     async def _get_question_count_by_quiz_id(self, quiz_id: int) -> int:
         return await self.session.execute(select(Question).where(Question.quiz_id == quiz_id)).scalar()
 
-    async def take_quiz(self, quiz_id: int, answers: AnswerList, company_id: int, user_id: int) -> ResultBase:
-
+    async def take_quiz(self, quiz_id: int, answers: AnswerList, company_id: int, user_id: int) -> Optional[ResultBase]:
         counter = 0
         quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
+
+        questions = []
         for question in quiz.question_list:
+            item = QuestionsForRedis(
+                question_id=str(question.question_id),
+                question_text=question.question_text,
+                answer=question.question_answers[int(answers.answers[str(question.question_id)])],
+                isCorrect=question.question_correct_answer == int(answers.answers[str(question.question_id)])
+            )
+            question_dict = item.dict()
+            question_json = json.dumps(question_dict)
+            questions.append(question_json)
             if answers.answers[str(question.question_id)] == str(question.question_correct_answer):
                 counter += 1
 
@@ -128,6 +143,10 @@ class QuizService:
         self.session.add(new_result)
         await self.session.flush()
         await self.session.commit()
+        await add_quiz(user_id=str(user_id),
+                       company_id=str(company_id),
+                       quiz_id=str(quiz_id),
+                       questions=questions)
         return new_result
 
     async def get_global_rate_for_user(self, user_id) -> int:

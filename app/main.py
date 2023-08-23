@@ -34,6 +34,7 @@ async def root():
     }
 
 
+
 app.include_router(user_router, prefix="/users", tags=["Users"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(company_router, prefix="/company", tags=["Companies"])
