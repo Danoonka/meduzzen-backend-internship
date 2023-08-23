@@ -80,8 +80,9 @@ class QuizService:
             raise Exception("Question does not exist")
 
     async def get_quiz_by_id(self, quiz_id: int) -> FullQuizBase:
-        return await self.session.scalar(select(Quiz).where(Quiz.quiz_id == quiz_id).options(
+        quiz = await self.session.scalar(select(Quiz).where(Quiz.quiz_id == quiz_id).options(
             selectinload(Quiz.question_list)))
+        return quiz
 
     async def get_question_by_id(self, question_id: int) -> QuestionBase:
         return await self.session.scalar(select(Question).where(Question.question_id == question_id))
